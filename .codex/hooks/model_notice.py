@@ -9,6 +9,7 @@ from pathlib import Path
 
 STATE_DIR = Path.home() / ".codex" / "tmp"
 STATE_FILE = STATE_DIR / "model_notice_state.json"
+DEFAULT_SOUND = Path("/System/Library/Sounds/Glass.aiff")
 
 
 def load_state() -> dict:
@@ -54,6 +55,24 @@ def notify_mac(title: str, subtitle: str, message: str) -> None:
     )
 
 
+def play_sound() -> None:
+    if sys.platform != "darwin":
+        return
+    if DEFAULT_SOUND.exists():
+        subprocess.Popen(
+            ["/usr/bin/afplay", str(DEFAULT_SOUND)],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+        return
+    subprocess.run(
+        ["/usr/bin/osascript", "-e", "beep"],
+        check=False,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+
+
 def main() -> int:
     try:
         payload = json.load(sys.stdin)
@@ -81,6 +100,7 @@ def main() -> int:
             state[session_id] = model
             save_state(state)
             if previous:
+                play_sound()
                 notify_mac("Codex", "模型已切换", f"{previous} -> {model}")
                 emit(f"模型已切换：{previous} -> {model}")
             else:
