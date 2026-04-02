@@ -86,6 +86,7 @@ codex -C /path/to/oh--codex -p docs
 
 - hooks 是实验特性，需要在 `config.toml` 里打开 `codex_hooks = true`
 - `systemMessage` 会显示在 UI 或 event stream 中，不一定是非常显眼的固定栏
+- 当模型真的从 `A` 切到 `B` 时，hook 还会调用 macOS `osascript` 发一条系统通知
 - profile 是“会话档位”，不是每条消息都自动热切顶层模型
 - 如果你没有切 profile，也没有走到另一个子代理，模型通常不会变化
 

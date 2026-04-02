@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import json
 import os
+import subprocess
 import sys
 import tempfile
 from pathlib import Path
@@ -35,6 +36,24 @@ def emit(message: str) -> None:
     print(json.dumps({"systemMessage": message}, ensure_ascii=False))
 
 
+def notify_mac(title: str, subtitle: str, message: str) -> None:
+    if sys.platform != "darwin":
+        return
+    safe_title = title.replace('"', "'")
+    safe_subtitle = subtitle.replace('"', "'")
+    safe_message = message.replace('"', "'")
+    script = (
+        f'display notification "{safe_message}" '
+        f'with title "{safe_title}" subtitle "{safe_subtitle}"'
+    )
+    subprocess.run(
+        ["/usr/bin/osascript", "-e", script],
+        check=False,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+
+
 def main() -> int:
     try:
         payload = json.load(sys.stdin)
@@ -62,6 +81,7 @@ def main() -> int:
             state[session_id] = model
             save_state(state)
             if previous:
+                notify_mac("Codex", "模型已切换", f"{previous} -> {model}")
                 emit(f"模型已切换：{previous} -> {model}")
             else:
                 emit(f"当前模型：{model}")
