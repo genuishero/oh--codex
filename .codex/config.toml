@@ -1,0 +1,63 @@
+model = "gpt-5.4"
+model_reasoning_effort = "high"
+plan_mode_reasoning_effort = "xhigh"
+review_model = "gpt-5.4"
+project_doc_fallback_filenames = [".agents.md"]
+project_doc_max_bytes = 65536
+
+[features]
+codex_hooks = true
+
+[agents]
+max_threads = 6
+max_depth = 1
+
+[profiles.fast]
+model = "gpt-5.4-mini"
+model_reasoning_effort = "medium"
+plan_mode_reasoning_effort = "high"
+review_model = "gpt-5.4"
+web_search = "cached"
+
+[profiles.inspect]
+model = "gpt-5.4-mini"
+model_reasoning_effort = "medium"
+plan_mode_reasoning_effort = "high"
+review_model = "gpt-5.4"
+web_search = "cached"
+
+[profiles.deep]
+model = "gpt-5.4"
+model_reasoning_effort = "xhigh"
+plan_mode_reasoning_effort = "xhigh"
+review_model = "gpt-5.4"
+web_search = "cached"
+
+[profiles.bug]
+model = "gpt-5.4"
+model_reasoning_effort = "high"
+plan_mode_reasoning_effort = "xhigh"
+review_model = "gpt-5.4"
+web_search = "cached"
+
+[profiles.docs]
+model = "gpt-5.4-mini"
+model_reasoning_effort = "medium"
+plan_mode_reasoning_effort = "high"
+review_model = "gpt-5.4"
+web_search = "live"
+
+[profiles.review]
+model = "gpt-5.4"
+model_reasoning_effort = "high"
+plan_mode_reasoning_effort = "xhigh"
+review_model = "gpt-5.4"
+web_search = "cached"
+
+[profiles.frontend]
+model = "gpt-5.4"
+model_reasoning_effort = "high"
+plan_mode_reasoning_effort = "high"
+review_model = "gpt-5.4"
+tools_view_image = true
+web_search = "cached"
