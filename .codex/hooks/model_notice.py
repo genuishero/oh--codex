@@ -9,7 +9,7 @@ from pathlib import Path
 
 STATE_DIR = Path.home() / ".codex" / "tmp"
 STATE_FILE = STATE_DIR / "model_notice_state.json"
-DEFAULT_SOUND = Path("/System/Library/Sounds/Glass.aiff")
+DEFAULT_SOUND = Path("/System/Library/Sounds/Funk.aiff")
 
 
 def load_state() -> dict:
@@ -59,14 +59,16 @@ def play_sound() -> None:
     if sys.platform != "darwin":
         return
     if DEFAULT_SOUND.exists():
-        subprocess.Popen(
-            ["/usr/bin/afplay", str(DEFAULT_SOUND)],
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-        )
+        for _ in range(2):
+            subprocess.run(
+                ["/usr/bin/afplay", "-v", "2", str(DEFAULT_SOUND)],
+                check=False,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
         return
     subprocess.run(
-        ["/usr/bin/osascript", "-e", "beep"],
+        ["/usr/bin/osascript", "-e", "beep 2"],
         check=False,
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
