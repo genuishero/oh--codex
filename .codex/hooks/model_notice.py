@@ -4,7 +4,9 @@ import os
 import subprocess
 import sys
 import tempfile
+from html import escape
 from pathlib import Path
+from shutil import which
 
 
 STATE_DIR = Path.home() / ".codex" / "tmp"
@@ -37,6 +39,15 @@ def emit(message: str) -> None:
     print(json.dumps({"systemMessage": message}, ensure_ascii=False))
 
 
+def run_quietly(command: list[str]) -> None:
+    subprocess.run(
+        command,
+        check=False,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+
+
 def notify_mac(title: str, subtitle: str, message: str) -> None:
     if sys.platform != "darwin":
         return
@@ -47,32 +58,77 @@ def notify_mac(title: str, subtitle: str, message: str) -> None:
         f'display notification "{safe_message}" '
         f'with title "{safe_title}" subtitle "{safe_subtitle}"'
     )
-    subprocess.run(
-        ["/usr/bin/osascript", "-e", script],
-        check=False,
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
-    )
+    run_quietly(["/usr/bin/osascript", "-e", script])
+
+
+def notify_windows(title: str, subtitle: str, message: str) -> None:
+    if sys.platform != "win32":
+        return
+
+    powershell = which("powershell") or which("powershell.exe") or which("pwsh")
+    if not powershell:
+        return
+
+    lines = [title.strip()]
+    if subtitle.strip():
+        lines.append(subtitle.strip())
+    if message.strip():
+        lines.append(message.strip())
+    body = "\n".join(lines)
+
+    # Best effort toast: if the Windows notification API is unavailable, the
+    # hook still falls back to the in-app systemMessage and optional beep.
+    script = rf"""
+Add-Type -AssemblyName System.Runtime.WindowsRuntime -ErrorAction SilentlyContinue
+[Windows.UI.Notifications.ToastNotificationManager, Windows.UI.Notifications, ContentType = WindowsRuntime] > $null
+[Windows.Data.Xml.Dom.XmlDocument, Windows.Data.Xml.Dom.XmlDocument, ContentType = WindowsRuntime] > $null
+$xml = @"
+<toast>
+  <visual>
+    <binding template="ToastGeneric">
+      <text>{escape(title)}</text>
+      <text>{escape(subtitle)}</text>
+      <text>{escape(message)}</text>
+    </binding>
+  </visual>
+</toast>
+"@
+$doc = New-Object Windows.Data.Xml.Dom.XmlDocument
+$doc.LoadXml($xml)
+$toast = [Windows.UI.Notifications.ToastNotification]::new($doc)
+$notifier = [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier("Codex")
+$notifier.Show($toast)
+"""
+    run_quietly([powershell, "-NoProfile", "-Command", script])
 
 
 def play_sound() -> None:
-    if sys.platform != "darwin":
+    if sys.platform == "darwin":
+        if DEFAULT_SOUND.exists():
+            for _ in range(2):
+                run_quietly(["/usr/bin/afplay", "-v", "2", str(DEFAULT_SOUND)])
+            return
+        run_quietly(["/usr/bin/osascript", "-e", "beep 2"])
         return
-    if DEFAULT_SOUND.exists():
-        for _ in range(2):
-            subprocess.run(
-                ["/usr/bin/afplay", "-v", "2", str(DEFAULT_SOUND)],
-                check=False,
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-            )
+
+    if sys.platform == "win32":
+        try:
+            import winsound
+
+            for _ in range(2):
+                winsound.MessageBeep(winsound.MB_ICONASTERISK)
+        except Exception:
+            pass
         return
-    subprocess.run(
-        ["/usr/bin/osascript", "-e", "beep 2"],
-        check=False,
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
-    )
+
+
+def notify_user(title: str, subtitle: str, message: str) -> None:
+    if sys.platform == "darwin":
+        notify_mac(title, subtitle, message)
+        return
+
+    if sys.platform == "win32":
+        notify_windows(title, subtitle, message)
 
 
 def main() -> int:
@@ -103,7 +159,7 @@ def main() -> int:
             save_state(state)
             if previous:
                 play_sound()
-                notify_mac("Codex", "模型已切换", f"{previous} -> {model}")
+                notify_user("Codex", "模型已切换", f"{previous} -> {model}")
                 emit(f"模型已切换：{previous} -> {model}")
             else:
                 emit(f"当前模型：{model}")

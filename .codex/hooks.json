@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "/usr/bin/python3 \"$(git rev-parse --show-toplevel)/.codex/hooks/model_notice.py\"",
+            "command": "python \"$(git rev-parse --show-toplevel)/.codex/hooks/model_notice.py\"",
             "statusMessage": "读取当前模型"
           }
         ]
@@ -17,7 +17,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "/usr/bin/python3 \"$(git rev-parse --show-toplevel)/.codex/hooks/model_notice.py\""
+            "command": "python \"$(git rev-parse --show-toplevel)/.codex/hooks/model_notice.py\""
           }
         ]
       }
